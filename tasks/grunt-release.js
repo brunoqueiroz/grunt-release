@@ -62,7 +62,16 @@ module.exports = function(grunt){
       var pkg = grunt.file.readJSON(file);
       var newVersion = pkg.version;
       if (options.bump) {
+        
+        if(pkg.version.search('-RC') !== -1){
+          pkg.version = pkg.version.replace('-RC','-')
+        }
+        
         newVersion = semver.inc(pkg.version, type || 'patch');
+        
+        if(newVersion.search('-') !== -1){
+          newVersion = newVersion.replace('-', '-RC');
+        }
       }
       return {file: file, pkg: pkg, newVersion: newVersion};
     }
