@@ -23,7 +23,8 @@ module.exports = function(grunt){
       tag: true,
       push: true,
       pushTags: true,
-      npm : true
+      npm : true,
+      preReleasePrefix: ''
     });
 
     var config = setup(options.file, type);
@@ -32,9 +33,11 @@ module.exports = function(grunt){
         version: config.newVersion
       }
     };
+
     var tagName = grunt.template.process(grunt.config.getRaw('release.options.tagName') || '<%= version %>', templateOptions);
     var commitMessage = grunt.template.process(grunt.config.getRaw('release.options.commitMessage') || 'release <%= version %>', templateOptions);
     var tagMessage = grunt.template.process(grunt.config.getRaw('release.options.tagMessage') || 'version <%= version %>', templateOptions);
+    
     var nowrite = grunt.option('no-write');
     var task = this;
     var done = this.async();
@@ -62,15 +65,17 @@ module.exports = function(grunt){
       var pkg = grunt.file.readJSON(file);
       var newVersion = pkg.version;
       if (options.bump) {
-        
-        if(pkg.version.search('-RC') !== -1){
-          pkg.version = pkg.version.replace('-RC','-')
+        versionArray = pkg.version.split('-');
+        if(versionArray.length > 1)
+        {
+          releaseCandidate = versionArray[1].replace(options.preReleasePrefix, '');
+          if(!isNaN(releaseCandidate)){
+            pkg.version = ""+versionArray[0]+"-"+releaseCandidate;
+          }
         }
-        
         newVersion = semver.inc(pkg.version, type || 'patch');
-        
         if(newVersion.search('-') !== -1){
-          newVersion = newVersion.replace('-', '-RC');
+          newVersion = newVersion.replace('-', '-'+options.preReleasePrefix);
         }
       }
       return {file: file, pkg: pkg, newVersion: newVersion};
